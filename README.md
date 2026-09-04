@@ -62,3 +62,6 @@ pip install matplotlib shapely numpy
 | 육지 | `#e8f4e8` |
 | 시군구 경계선 | `#333333` |
 | 시도 경계선 | `#111111` |
+
+
+<img width="697" height="969" alt="image" src="https://github.com/user-attachments/assets/d21bddb0-b33b-4d2d-8fff-239f4b4f96c7" />
