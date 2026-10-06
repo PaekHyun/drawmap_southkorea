@@ -169,26 +169,44 @@ def main():
     # 전체 육지 외곽(해안선) — 내륙 경계 추출용
     all_land_bnd = all_land.boundary
 
-    def plot_internal_boundaries(poly_dict, color, lw, zorder):
-        """각 폴리곤 boundary에서 해안선(전체 외곽)을 빼고 내륙 경계만 그리기"""
-        for g in poly_dict.values():
-            internal = g.boundary.difference(all_land_bnd)
-            if internal.is_empty:
-                continue
-            if internal.geom_type == "LineString":
-                x, y = internal.xy
-                ax.plot(x, y, color=color, linewidth=lw, zorder=zorder)
-            else:
-                for line in internal.geoms:
-                    if line.geom_type == "LineString":
-                        x, y = line.xy
-                        ax.plot(x, y, color=color, linewidth=lw, zorder=zorder)
+    def plot_lines(geom, color, lw, zorder):
+        """LineString / MultiLineString 을 그린다"""
+        if geom.is_empty:
+            return
+        if geom.geom_type == "LineString":
+            x, y = geom.xy
+            ax.plot(x, y, color=color, linewidth=lw, zorder=zorder)
+        else:
+            for line in geom.geoms:
+                if line.geom_type == "LineString":
+                    x, y = line.xy
+                    ax.plot(x, y, color=color, linewidth=lw, zorder=zorder)
 
-    # 시/군 경계 (연하게) — 해안선 제거, 내륙 경계만
-    plot_internal_boundaries(city_polys, CITY_EDGE, 0.5, 3)
+    # 시/군 경계 (연하게) — 각 폴리곤 boundary에서 해안선을 빼고 내륙 경계만
+    for g in city_polys.values():
+        internal = g.boundary.difference(all_land_bnd)
+        plot_lines(internal, CITY_EDGE, 0.5, 3)
 
-    # 도(시도) 경계 (진하게) — 해안선 제거, 내륙 경계만
-    plot_internal_boundaries(sido_polys, SIDO_EDGE, 1.5, 4)
+    # 도(시도) 경계 (진하게) — 구멍(holes)을 메운 뒤 인접 시도 간 접촉면만 추출
+    # 시도 폴리곤에는 내부에 다른 시도(서울/인천 등)가 구멍으로 존재하므로
+    # 구멍을 메우지 않으면 구멍 경계가 도 경계로 잘못 그려진다
+    from shapely.geometry import Polygon
+    sido_filled = {}
+    for code, g in sido_polys.items():
+        if g.geom_type == "Polygon":
+            # exterior만 취하고 interior(구멍) 제거
+            sido_filled[code] = Polygon(g.exterior)
+        else:
+            filled_parts = [Polygon(p.exterior) for p in g.geoms]
+            sido_filled[code] = unary_union(filled_parts)
+
+    # 구멍을 메운 시도 폴리곤들의 합집합 외곽 = 진짜 해안선 + 구멍 경계
+    all_sido_filled = unary_union(list(sido_filled.values()))
+    all_sido_filled_bnd = all_sido_filled.boundary
+
+    for g in sido_filled.values():
+        internal = g.boundary.difference(all_sido_filled_bnd)
+        plot_lines(internal, SIDO_EDGE, 1.5, 4)
 
     # 북한 윤곽선
     for poly in get_polys(nk_clip):
