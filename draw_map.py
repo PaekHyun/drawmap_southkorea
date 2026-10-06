@@ -166,33 +166,29 @@ def main():
         x, y = poly.exterior.xy
         ax.fill(x, y, facecolor=LAND_COLOR, edgecolor="none", zorder=2)
 
-    # 시/군 경계 (연하게) — 인접 시/군과 접하는 내륙 경계만
-    city_list = list(city_polys.values())
-    for i, g in enumerate(city_list):
-        for j in range(i + 1, len(city_list)):
-            inter = g.boundary.intersection(city_list[j].boundary)
-            if not inter.is_empty:
-                if inter.geom_type == "LineString":
-                    x, y = inter.xy
-                    ax.plot(x, y, color=CITY_EDGE, linewidth=0.4, zorder=3)
-                else:
-                    for line in inter.geoms:
-                        x, y = line.xy
-                        ax.plot(x, y, color=CITY_EDGE, linewidth=0.4, zorder=3)
+    # 전체 육지 외곽(해안선) — 내륙 경계 추출용
+    all_land_bnd = all_land.boundary
 
-    # 도(시도) 경계 (진하게) — 인접 시도와 접하는 내륙 경계만
-    sido_list = list(sido_polys.values())
-    for i, g in enumerate(sido_list):
-        for j in range(i + 1, len(sido_list)):
-            inter = g.boundary.intersection(sido_list[j].boundary)
-            if not inter.is_empty:
-                if inter.geom_type == "LineString":
-                    x, y = inter.xy
-                    ax.plot(x, y, color=SIDO_EDGE, linewidth=1.5, zorder=4)
-                else:
-                    for line in inter.geoms:
+    def plot_internal_boundaries(poly_dict, color, lw, zorder):
+        """각 폴리곤 boundary에서 해안선(전체 외곽)을 빼고 내륙 경계만 그리기"""
+        for g in poly_dict.values():
+            internal = g.boundary.difference(all_land_bnd)
+            if internal.is_empty:
+                continue
+            if internal.geom_type == "LineString":
+                x, y = internal.xy
+                ax.plot(x, y, color=color, linewidth=lw, zorder=zorder)
+            else:
+                for line in internal.geoms:
+                    if line.geom_type == "LineString":
                         x, y = line.xy
-                        ax.plot(x, y, color=SIDO_EDGE, linewidth=1.5, zorder=4)
+                        ax.plot(x, y, color=color, linewidth=lw, zorder=zorder)
+
+    # 시/군 경계 (연하게) — 해안선 제거, 내륙 경계만
+    plot_internal_boundaries(city_polys, CITY_EDGE, 0.5, 3)
+
+    # 도(시도) 경계 (진하게) — 해안선 제거, 내륙 경계만
+    plot_internal_boundaries(sido_polys, SIDO_EDGE, 1.5, 4)
 
     # 북한 윤곽선
     for poly in get_polys(nk_clip):
