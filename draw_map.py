@@ -24,14 +24,14 @@ NK = r"D:\SEMCoWork\Session25_map\north_korea.geojson"
 OUT = r"D:\SEMCoWork\Session25_map\south_korea_map.png"
 
 # ── 출력 설정 ──
-W_INCH = 39.37            # 가로 1m
+W_INCH = 10              # 가로 10인치
 H_INCH = W_INCH * 1.5     # 세로 1.5m
 DPI = 1000                # 인화용 초고해상도
 
 # ── 섬 필터 (km² 단위) ──
 # 이 면적(km²)보다 작은 섬은 모두 제거
 # 2 km² ≈ 작은 섬들만 제거, 200 km² ≈ 제주도(1,848km²)는 유지·거문도(98km²) 제거
-ISLAND_MIN_AREA_KM2 = 2
+ISLAND_MIN_AREA_KM2 = 200  # 200 km² 이하 섬 제거
 # 내부 변환: 1 제곱도 ≈ 9,845 km² (한반도 위도 보정 0.799)
 SQDEG_TO_KM2 = 9845
 
