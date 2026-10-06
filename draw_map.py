@@ -43,6 +43,10 @@ SIDO_EDGE = "#222222"         # 도 경계 (진하게)
 CITY_EDGE = "#888888"         # 시/군 경계 (연하게)
 NK_EDGE = "#555555"           # 북한 윤곽선
 
+# ── 선 두께 (포인트) ──
+SIDO_LW = 1.5             # 도(시도) 경계선 두께
+CITY_LW = 0.5             # 시/군 경계선 두께
+
 # ── 코드 ──
 METRO_CODES = {"11", "21", "22", "23", "24", "25", "26"}
 SIDO_NAMES = {
@@ -185,7 +189,7 @@ def main():
     # 시/군 경계 (연하게) — 각 폴리곤 boundary에서 해안선을 빼고 내륙 경계만
     for g in city_polys.values():
         internal = g.boundary.difference(all_land_bnd)
-        plot_lines(internal, CITY_EDGE, 0.5, 3)
+        plot_lines(internal, CITY_EDGE, CITY_LW, 3)
 
     # 도(시도) 경계 (진하게) — 구멍(holes)을 메운 뒤 인접 시도 간 접촉면만 추출
     # 시도 폴리곤에는 내부에 다른 시도(서울/인천 등)가 구멍으로 존재하므로
@@ -206,7 +210,7 @@ def main():
 
     for g in sido_filled.values():
         internal = g.boundary.difference(all_sido_filled_bnd)
-        plot_lines(internal, SIDO_EDGE, 1.5, 4)
+        plot_lines(internal, SIDO_EDGE, SIDO_LW, 4)
 
     # 북한 윤곽선
     for poly in get_polys(nk_clip):
