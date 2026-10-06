@@ -28,10 +28,12 @@ W_INCH = 39.37            # 가로 1m
 H_INCH = W_INCH * 1.5     # 세로 1.5m
 DPI = 1000                # 인화용 초고해상도
 
-# ── 섬 필터 ──
-# 폴리곤 면적(제곱도) 기준. 1제곱도 ≈ 9,845 km² (한반도 위도 보정 0.799)
-# 0.02 ≈ 197 km², 0.01 ≈ 98 km², 0.005 ≈ 49 km²
-ISLAND_MIN_AREA = 0.02
+# ── 섬 필터 (km² 단위) ──
+# 이 면적(km²)보다 작은 섬은 모두 제거
+# 2 km² ≈ 작은 섬들만 제거, 200 km² ≈ 제주도(1,848km²)는 유지·거문도(98km²) 제거
+ISLAND_MIN_AREA_KM2 = 2
+# 내부 변환: 1 제곱도 ≈ 9,845 km² (한반도 위도 보정 0.799)
+SQDEG_TO_KM2 = 9845
 
 # ── 색상 ──
 SEA_COLOR = "#4A90D9"        # 바다 (파랑)
@@ -105,11 +107,12 @@ def main():
         city_groups.setdefault(city, []).append(geom)
 
     # ── 2. 병합 + 섬 필터 ──
+    min_area_sqdeg = ISLAND_MIN_AREA_KM2 / SQDEG_TO_KM2
     # 시도별 병합
     sido_polys = {}  # code → merged geom
     for code, geoms in sido_groups.items():
         merged = unary_union(geoms)
-        filtered = filter_islands(merged, ISLAND_MIN_AREA)
+        filtered = filter_islands(merged, min_area_sqdeg)
         if filtered is not None:
             sido_polys[code] = filtered
 
@@ -117,7 +120,7 @@ def main():
     city_polys = {}  # name → merged geom
     for city, geoms in city_groups.items():
         merged = unary_union(geoms)
-        filtered = filter_islands(merged, ISLAND_MIN_AREA)
+        filtered = filter_islands(merged, min_area_sqdeg)
         if filtered is not None:
             city_polys[city] = filtered
 
@@ -206,7 +209,7 @@ def main():
     print("saved:", OUT)
     print(f"출력 크기: {int(W_INCH*DPI)} x {int(H_INCH*DPI)} px")
     print(f"물리 크기: {W_INCH/39.37:.2f}m x {H_INCH/39.37:.2f}m")
-    print(f"섬 필터: {ISLAND_MIN_AREA} 제곱도 (≈{ISLAND_MIN_AREA*9845:.0f} km² 이하 제거)")
+    print(f"섬 필터: {ISLAND_MIN_AREA_KM2} km² 이하 제거 (≈{min_area_sqdeg:.6f} 제곱도)")
 
 
 if __name__ == "__main__":
